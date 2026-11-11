@@ -79,7 +79,7 @@ export class OmlxLanguageModelProvider implements vscode.LanguageModelChatProvid
 
     if (pdfPartsReceived === 0 && messages.some(message => message.content.some(part =>
       part instanceof vscode.LanguageModelTextPart &&
-      /<attachments>\\s*<\\/attachments>/i.test(part.value)
+      /<attachments>\s*<\/attachments>/i.test(part.value)
     ))) {
       throw new Error(
         'VS Code did not forward the attached document to the oMLX provider. ' +
