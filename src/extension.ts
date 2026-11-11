@@ -12,12 +12,28 @@ export function activate(context: vscode.ExtensionContext): void {
   const provider = new OmlxLanguageModelProvider(configuration, output);
 
   context.subscriptions.push(output);
-  context.subscriptions.push(vscode.lm.registerLanguageModelChatProvider('omlx', provider));
+
+  // Contributed views are visible before the extension activates. Register the
+  // TreeDataProvider first so a failure in the optional model integration cannot
+  // leave the sidebar displaying "There is no data provider registered".
+  registerNavigation(context, configuration);
 
   registerManageProviderCommand(context);
   registerTokenCommands(context, configuration, provider);
   registerConnectionCommands(context, configuration, provider, output);
-  registerNavigation(context, configuration);
+
+  // Copilot Chat may be absent/disabled in the isolated F5 host. Its model
+  // provider registration must not prevent Home and Settings from working.
+  try {
+    context.subscriptions.push(vscode.lm.registerLanguageModelChatProvider('omlx', provider));
+  } catch (error) {
+    const details = error instanceof Error ? error.stack ?? error.message : String(error);
+    output.appendLine(`Failed to register the oMLX language model provider: ${details}`);
+    void vscode.window.showWarningMessage(
+      'oMLX navigation is available, but its chat model provider could not be registered. ' +
+      'See the "oMLX Copilot Chat" output channel for details.'
+    );
+  }
 
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration(event => {
