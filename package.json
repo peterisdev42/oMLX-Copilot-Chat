@@ -27,7 +27,10 @@
     "onCommand:omlx.setApiToken",
     "onCommand:omlx.clearApiToken",
     "onCommand:omlx.testConnection",
-    "onCommand:omlx.refreshModels"
+    "onCommand:omlx.refreshModels",
+    "onView:omlx.navigation",
+    "onCommand:omlx.openHome",
+    "onCommand:omlx.openSettings"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -62,6 +65,16 @@
       {
         "command": "omlx.refreshModels",
         "title": "Refresh Models",
+        "category": "oMLX"
+      },
+      {
+        "command": "omlx.openHome",
+        "title": "Open Home",
+        "category": "oMLX"
+      },
+      {
+        "command": "omlx.openSettings",
+        "title": "Open Settings",
         "category": "oMLX"
       }
     ],
@@ -108,13 +121,31 @@
           "description": "Maximum number of tools to advertise for oMLX Agent mode requests. Lower this if tool schemas are pushing prompts over the model context window."
         }
       }
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "omlx",
+          "title": "oMLX",
+          "icon": "media/omlx.svg"
+        }
+      ]
+    },
+    "views": {
+      "omlx": [
+        {
+          "id": "omlx.navigation",
+          "name": "Quick Access"
+        }
+      ]
     }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "package": "vsce package"
+    "package": "vsce package",
+    "test": "npm run compile && node --test out/provider/attachmentConversion.test.js"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

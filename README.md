@@ -80,3 +80,46 @@ npm run compile
 ```
 
 Press `F5` in VS Code to launch an Extension Development Host.
+
+## Sidebar navigation
+
+The oMLX activity bar entry contains two TreeView shortcuts:
+
+- **Home** opens the admin dashboard at `http://127.0.0.1:8000/admin` by
+  default, in VS Code's built-in browser/editor panel. The URL follows the
+  origin of `omlx.baseUrl` if the server host or port changes. For remote
+  workspaces, VS Code's URI forwarding is used. Some admin servers may block
+  iframe-based browsers through security headers; in that case use a regular
+  external browser.
+- **Settings** opens a VS Code-themed settings panel that is generated from the
+  extension's declared `omlx.*` configuration schema. It supports User and
+  Workspace scope, save, reset, and API-token actions. API tokens stay in
+  VS Code Secret Storage and are never placed in the webview or settings.json.
+
+## PDF attachments
+
+When VS Code sends `LanguageModelDataPart` data with
+`mimeType: application/pdf`, the extension forwards it to oMLX as an
+OpenAI Chat Completions `file` content part with `file_data` containing
+a base64 data URI. Unlike images, this does not require enabling
+`omlx.enableImageInput`. oMLX must have its document/MarkItDown
+preprocessing enabled to extract text.
+
+**VS Code limitation:** Some versions of GitHub Copilot Chat drop PDF document
+parts before calling third-party Language Model Chat Providers
+([microsoft/vscode#336694](https://github.com/microsoft/vscode/issues/336694)).
+This extension cannot recover files it never receives. The oMLX output channel
+logs how many PDF data parts reach the provider, without logging their bytes.
+If the Copilot request contains an empty `<attachments>` wrapper, the provider
+returns an explicit error rather than claiming to have read the attachment.
+If this happens, use the oMLX dashboard chat or extract the PDF into a
+workspace file for the agent.
+
+## Tests
+
+```sh
+npm test
+```
+
+This runs the TypeScript compiler and Node.js built-in tests for PDF and
+image attachment conversion.

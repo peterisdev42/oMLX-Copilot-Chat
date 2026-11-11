@@ -23,8 +23,7 @@ export function registerManageProviderCommand(context: vscode.ExtensionContext):
           {
             label: 'Open Settings',
             description: 'Edit oMLX endpoint and capability settings',
-            command: 'workbench.action.openSettings',
-            args: ['@ext:techopolis.omlx-copilot-chat']
+            command: 'omlx.openSettings'
           },
           {
             label: 'Clear API Token',
@@ -42,7 +41,7 @@ export function registerManageProviderCommand(context: vscode.ExtensionContext):
         return;
       }
 
-      await vscode.commands.executeCommand(selection.command, ...(selection.args ?? []));
+      await vscode.commands.executeCommand(selection.command);
     })
   );
 }

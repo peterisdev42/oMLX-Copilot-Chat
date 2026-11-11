@@ -70,6 +70,24 @@ export class OmlxLanguageModelProvider implements vscode.LanguageModelChatProvid
 
     const settings = this.configuration.settings;
     const client = new OmlxClient(settings.baseUrl, apiToken, settings.requestTimeoutMs);
+    // Log metadata only: never emit binary attachment contents or API secrets.
+    const pdfPartsReceived = messages.reduce((count, message) => count +
+      message.content.filter(part =>
+        (part as { readonly mimeType?: unknown }).mimeType === 'application/pdf'
+      ).length, 0);
+    this.output.appendLine(`PDF data parts received from VS Code: ${pdfPartsReceived}`);
+
+    if (pdfPartsReceived === 0 && messages.some(message => message.content.some(part =>
+      part instanceof vscode.LanguageModelTextPart &&
+      /<attachments>\s*<\/attachments>/i.test(part.value)
+    ))) {
+      throw new Error(
+        'VS Code did not forward the attached document to the oMLX provider. ' +
+        'This is a known Copilot Chat bridge issue (microsoft/vscode#336694). ' +
+        'Try adding the PDF to your workspace and extracting its text, or use the oMLX admin chat.'
+      );
+    }
+
     const convertedMessages = convertMessages(messages, Boolean(model.capabilities.imageInput));
     const requestOptions = extractRequestOptions(options, settings.maxToolCount);
     const estimatedInputTokens = messages.reduce((total, message) => total + estimateTokenCount(message), 0);

@@ -4,6 +4,7 @@ import { registerManageProviderCommand } from './commands/manageProvider';
 import { registerTokenCommands } from './commands/manageToken';
 import { OmlxConfiguration } from './config/OmlxConfiguration';
 import { OmlxLanguageModelProvider } from './provider/OmlxLanguageModelProvider';
+import { registerNavigation } from './ui/navigation';
 
 export function activate(context: vscode.ExtensionContext): void {
   const output = vscode.window.createOutputChannel('oMLX Copilot Chat');
@@ -16,6 +17,7 @@ export function activate(context: vscode.ExtensionContext): void {
   registerManageProviderCommand(context);
   registerTokenCommands(context, configuration, provider);
   registerConnectionCommands(context, configuration, provider, output);
+  registerNavigation(context, configuration);
 
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration(event => {
