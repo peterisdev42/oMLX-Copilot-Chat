@@ -79,7 +79,19 @@ npm install
 npm run compile
 ```
 
-Press `F5` in VS Code to launch an Extension Development Host.
+Press `F5` in VS Code to launch **Run Extension (Isolated)**. This uses
+`--disable-extensions` so no other user-installed extensions activate; the
+current extension is loaded via `--extensionDevelopmentPath`. It also gives
+the debug host an independent, persistent user-data directory and empty
+extensions directory under `.vscode/`, both ignored by Git. This prevents
+normal VS Code profiles and installed extensions from affecting debug sessions
+while retaining the debug host's settings between restarts.
+
+**Note:** GitHub Copilot Chat is also disabled in this isolated host.
+Use it to debug extension activation, sidebar, Home and Settings. End-to-end
+Copilot Chat/model-provider and PDF attachment testing requires a separate
+integration session with GitHub Copilot Chat enabled.
+
 
 ## Sidebar navigation
 
