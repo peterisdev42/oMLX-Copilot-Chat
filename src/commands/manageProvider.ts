@@ -41,7 +41,7 @@ export function registerManageProviderCommand(context: vscode.ExtensionContext):
         return;
       }
 
-      await vscode.commands.executeCommand(selection.command, ...(selection.args ?? []));
+      await vscode.commands.executeCommand(selection.command);
     })
   );
 }
