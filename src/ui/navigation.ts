@@ -25,12 +25,17 @@ export function registerNavigation(
   context: vscode.ExtensionContext,
   configuration: OmlxConfiguration
 ): void {
-  const settingsPanel = new SettingsPanel(context, configuration);
-  context.subscriptions.push(settingsPanel);
+  // Register the actual provider immediately; creating optional UI services or
+  // commands later must not stop the contributed TreeView from finding it.
   context.subscriptions.push(
     vscode.window.createTreeView('omlx.navigation', {
       treeDataProvider: new QuickAccessTreeProvider()
-    }),
+    })
+  );
+
+  const settingsPanel = new SettingsPanel(context, configuration);
+  context.subscriptions.push(settingsPanel);
+  context.subscriptions.push(
     vscode.commands.registerCommand('omlx.openHome', async () => {
       let admin: vscode.Uri;
       try {
