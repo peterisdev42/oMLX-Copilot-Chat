@@ -135,3 +135,16 @@ npm test
 
 This runs the TypeScript compiler and Node.js built-in tests for PDF and
 image attachment conversion.
+
+
+### Missing sidebar data provider
+
+If the oMLX sidebar displays `There is no data provider registered that can provide view data`,
+rebuild and restart the Extension Development Host. The extension registers the
+`omlx.navigation` TreeDataProvider before attempting chat-model registration,
+so isolated debugging still exposes Home and Settings even when chat integration
+is unavailable. Model-provider registration errors are reported in the
+**oMLX Copilot Chat** output channel.
+
+Run `npm test` to verify the activation regression test as well as PDF
+attachment conversion.
