@@ -1,8 +1,9 @@
 import * as vscode from 'vscode';
+import { convertBinaryPart } from './attachmentConversion';
 import {
   OpenAIChatMessage,
   OpenAIContent,
-  OpenAIImageContentPart,
+  OpenAIContentPart,
   OpenAITextContentPart,
   OpenAIToolCall
 } from './openAICompatTypes';
@@ -46,7 +47,7 @@ function convertContent(
   parts: readonly unknown[],
   supportsImages: boolean
 ): OpenAIContent {
-  const convertedParts: (OpenAITextContentPart | OpenAIImageContentPart)[] = [];
+  const convertedParts: OpenAIContentPart[] = [];
 
   for (const part of parts) {
     const text = getTextPartValue(part);
@@ -55,9 +56,9 @@ function convertContent(
       continue;
     }
 
-    const image = supportsImages ? getImagePartValue(part) : undefined;
-    if (image) {
-      convertedParts.push(image);
+    const binary = convertBinaryPart(part, supportsImages);
+    if (binary) {
+      convertedParts.push(binary);
     }
   }
 
@@ -109,29 +110,6 @@ function getTextPartValue(part: unknown): string | undefined {
 
   const candidate = part as { readonly value?: unknown };
   return typeof candidate.value === 'string' ? candidate.value : undefined;
-}
-
-function getImagePartValue(part: unknown): OpenAIImageContentPart | undefined {
-  const candidate = part as {
-    readonly mimeType?: unknown;
-    readonly data?: unknown;
-  };
-
-  if (typeof candidate.mimeType !== 'string' || !candidate.mimeType.startsWith('image/')) {
-    return undefined;
-  }
-
-  const data = candidate.data;
-  if (!(data instanceof Uint8Array)) {
-    return undefined;
-  }
-
-  return {
-    type: 'image_url',
-    image_url: {
-      url: `data:${candidate.mimeType};base64,${Buffer.from(data).toString('base64')}`
-    }
-  };
 }
 
 function isEmptyContent(content: OpenAIContent): boolean {
