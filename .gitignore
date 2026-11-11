@@ -13,6 +13,10 @@ pnpm-debug.log*
 coverage/
 .nyc_output/
 
+# Isolated VS Code Extension Development Host (F5)
+.vscode/.debug-user-data/
+.vscode/.debug-extensions/
+
 # Local environment
 .env
 .env.*
