@@ -41,7 +41,17 @@ export interface OpenAIImageContentPart {
   };
 }
 
-export type OpenAIContent = string | readonly (OpenAITextContentPart | OpenAIImageContentPart)[];
+export interface OpenAIFileContentPart {
+  readonly type: 'file';
+  readonly file: {
+    readonly filename: string;
+    readonly mime_type: string;
+    readonly file_data: string;
+  };
+}
+
+export type OpenAIContentPart = OpenAITextContentPart | OpenAIImageContentPart | OpenAIFileContentPart;
+export type OpenAIContent = string | readonly OpenAIContentPart[];
 
 export interface OpenAIChatMessage {
   readonly role: OpenAIRole;
