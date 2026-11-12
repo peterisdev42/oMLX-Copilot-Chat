@@ -145,7 +145,7 @@
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "package": "vsce package",
-    "test": "npm run compile && node --test out/provider/attachmentConversion.test.js out/activation.test.js"
+    "test": "npm run compile && node --test out/provider/attachmentConversion.test.js out/activation.test.js out/ui/homePanel.test.js"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
