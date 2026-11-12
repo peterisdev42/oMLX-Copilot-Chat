@@ -22,18 +22,28 @@ export async function run(): Promise<void> {
   await vscode.commands.executeCommand('workbench.view.extension.omlx');
   await vscode.commands.executeCommand('omlx.navigation.focus');
 
-  // Home uses a webview editor rather than the Simple Browser. It can be
-  // created without a running oMLX backend (the iframe may show a connection error).
-  await vscode.commands.executeCommand('omlx.openHome');
-  const homeTabs = vscode.window.tabGroups.all.flatMap(group => group.tabs).filter(tab =>
-    tab.input instanceof vscode.TabInputWebview && tab.input.viewType === 'omlx.home'
+  // VS Code may prefix WebviewPanel types in TabInputWebview, and tabGroups
+  // updates may arrive slightly after the command finishes.
+  const homeTabs = () => vscode.window.tabGroups.all.flatMap(group => group.tabs).filter(tab =>
+    tab.input instanceof vscode.TabInputWebview &&
+    (tab.input.viewType === 'omlx.home' || tab.input.viewType === 'mainThreadWebview-omlx.home')
   );
-  assert.equal(homeTabs.length, 1, 'Home must open a dedicated oMLX webview editor');
   await vscode.commands.executeCommand('omlx.openHome');
-  const repeatedHomeTabs = vscode.window.tabGroups.all.flatMap(group => group.tabs).filter(tab =>
-    tab.input instanceof vscode.TabInputWebview && tab.input.viewType === 'omlx.home'
+  let openedHomeTabs = homeTabs();
+  for (let attempt = 0; !openedHomeTabs.length && attempt < 40; attempt++) {
+    await new Promise(resolve => setTimeout(resolve, 100));
+    openedHomeTabs = homeTabs();
+  }
+  assert.equal(
+    openedHomeTabs.length, 1,
+    'Home must open a dedicated oMLX webview editor (tabs: ' +
+      vscode.window.tabGroups.all.flatMap(group => group.tabs)
+        .map(tab => tab.input instanceof vscode.TabInputWebview ? tab.input.viewType : tab.label)
+        .join(', ') + ')'
   );
-  assert.equal(repeatedHomeTabs.length, 1, 'Repeated Home clicks must reuse the tab');
+  await vscode.commands.executeCommand('omlx.openHome');
+  await new Promise(resolve => setTimeout(resolve, 200));
+  assert.equal(homeTabs().length, 1, 'Repeated Home clicks must reuse the tab');
 
   // Settings is independent of oMLX backend and Copilot Chat. It must work
   // in the strictly isolated Extension Development Host.
