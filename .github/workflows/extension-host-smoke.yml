@@ -1,0 +1,29 @@
+name: Extension Host Smoke
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  vscode-extension-host:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Compile extension and smoke runner
+        run: npm run compile
+      - name: Install VS Code test launcher (CI-only)
+        run: npm install --no-save --package-lock=false @vscode/test-electron@3.1.0
+      - name: Verify extension activates in real VS Code
+        run: xvfb-run -a node scripts/run-extension-host-smoke.cjs

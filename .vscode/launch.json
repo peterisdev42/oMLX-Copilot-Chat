@@ -2,10 +2,13 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Run Extension",
+      "name": "Run Extension (Isolated)",
       "type": "extensionHost",
       "request": "launch",
       "args": [
+        "--disable-extensions",
+        "--user-data-dir=${workspaceFolder}/.vscode/.debug-user-data",
+        "--extensions-dir=${workspaceFolder}/.vscode/.debug-extensions",
         "--extensionDevelopmentPath=${workspaceFolder}"
       ],
       "outFiles": [
