@@ -12,11 +12,13 @@ export function activate(context: vscode.ExtensionContext): void {
   const provider = new OmlxLanguageModelProvider(configuration, output);
 
   context.subscriptions.push(output);
+  output.appendLine(`Activating oMLX extension: ${context.extension.id} from ${context.extension.extensionPath}`);
 
   // Contributed views are visible before the extension activates. Register the
   // TreeDataProvider first so a failure in the optional model integration cannot
   // leave the sidebar displaying "There is no data provider registered".
   registerNavigation(context, configuration);
+  output.appendLine('Registered oMLX navigation TreeDataProvider (omlx.navigation).');
 
   registerManageProviderCommand(context);
   registerTokenCommands(context, configuration, provider);
