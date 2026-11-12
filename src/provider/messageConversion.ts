@@ -4,7 +4,6 @@ import {
   OpenAIChatMessage,
   OpenAIContent,
   OpenAIContentPart,
-  OpenAITextContentPart,
   OpenAIToolCall
 } from './openAICompatTypes';
 
@@ -24,7 +23,7 @@ function convertMessage(
   message: vscode.LanguageModelChatRequestMessage,
   supportsImages: boolean
 ): readonly OpenAIChatMessage[] {
-  const toolResults = toolResultMessages(message);
+  const toolResults = toolResultMessages(message, supportsImages);
   if (toolResults.length > 0) {
     return toolResults;
   }
@@ -92,14 +91,17 @@ function toolCallsForMessage(message: vscode.LanguageModelChatRequestMessage): r
     }));
 }
 
-function toolResultMessages(message: vscode.LanguageModelChatRequestMessage): readonly OpenAIChatMessage[] {
+function toolResultMessages(
+  message: vscode.LanguageModelChatRequestMessage,
+  supportsImages: boolean
+): readonly OpenAIChatMessage[] {
   const results = message.content
     .filter((part): part is vscode.LanguageModelToolResultPart => part instanceof vscode.LanguageModelToolResultPart);
 
   return results.map(result => ({
     role: 'tool',
     tool_call_id: result.callId,
-    content: result.content.map(part => getTextPartValue(part) ?? '').join('')
+    content: convertContent(result.content, supportsImages)
   }));
 }
 
@@ -108,8 +110,9 @@ function getTextPartValue(part: unknown): string | undefined {
     return part.value;
   }
 
-  const candidate = part as { readonly value?: unknown };
-  return typeof candidate.value === 'string' ? candidate.value : undefined;
+  const candidate = part && typeof part === 'object'
+    ? part as { readonly value?: unknown } : undefined;
+  return typeof candidate?.value === 'string' ? candidate.value : undefined;
 }
 
 function isEmptyContent(content: OpenAIContent): boolean {

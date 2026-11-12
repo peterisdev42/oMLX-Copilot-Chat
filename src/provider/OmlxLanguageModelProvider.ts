@@ -72,9 +72,12 @@ export class OmlxLanguageModelProvider implements vscode.LanguageModelChatProvid
     const client = new OmlxClient(settings.baseUrl, apiToken, settings.requestTimeoutMs);
     // Log metadata only: never emit binary attachment contents or API secrets.
     const pdfPartsReceived = messages.reduce((count, message) => count +
-      message.content.filter(part =>
-        (part as { readonly mimeType?: unknown }).mimeType === 'application/pdf'
-      ).length, 0);
+      message.content.filter(part => {
+        const data = part as { readonly mimeType?: unknown; readonly data?: unknown };
+        return typeof data?.mimeType === 'string' &&
+          data.mimeType.split(';', 1)[0].trim().toLowerCase() === 'application/pdf' &&
+          data.data instanceof Uint8Array;
+      }).length, 0);
     this.output.appendLine(`PDF data parts received from VS Code: ${pdfPartsReceived}`);
 
     if (pdfPartsReceived === 0 && messages.some(message => message.content.some(part =>
@@ -89,6 +92,13 @@ export class OmlxLanguageModelProvider implements vscode.LanguageModelChatProvid
     }
 
     const convertedMessages = convertMessages(messages, Boolean(model.capabilities.imageInput));
+    const forwardedPdfParts = convertedMessages.reduce((count, message) =>
+      count + (Array.isArray(message.content)
+        ? message.content.filter(part => part.type === 'file').length : 0), 0);
+    this.output.appendLine(`PDF file parts forwarded to oMLX: ${forwardedPdfParts}`);
+    if (pdfPartsReceived > 0 && forwardedPdfParts !== pdfPartsReceived) {
+      throw new Error('PDF attachment conversion failed; refusing to send an incomplete request.');
+    }
     const requestOptions = extractRequestOptions(options, settings.maxToolCount);
     const estimatedInputTokens = messages.reduce((total, message) => total + estimateTokenCount(message), 0);
     this.output.appendLine(
@@ -150,7 +160,12 @@ export class OmlxLanguageModelProvider implements vscode.LanguageModelChatProvid
       tooltip: metadata.tooltip,
       capabilities: {
         imageInput: metadata.supportsImageInput,
-        toolCalling: metadata.toolCalling
+        toolCalling: metadata.toolCalling,
+        // Forward-compatible hint for the upstream VS Code capability proposal
+        // (microsoft/vscode#328403). Current stable Copilot may still drop PDF.
+        fileInputMimeTypes: ['application/pdf']
+      } as vscode.LanguageModelChatInformation['capabilities'] & {
+        fileInputMimeTypes: readonly string[];
       }
     };
   }

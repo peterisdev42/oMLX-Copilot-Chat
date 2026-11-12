@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 
 const TOKEN_SECRET_KEY = 'omlx.apiToken';
+const ADMIN_TOKEN_SECRET_KEY = 'omlx.adminApiToken';
 const OBSERVED_CONTEXT_WINDOWS_KEY = 'omlx.observedContextWindows';
 
 export interface OmlxSettings {
@@ -35,6 +36,21 @@ export class OmlxConfiguration {
   async getApiToken(): Promise<string | undefined> {
     const token = await this.secrets.get(TOKEN_SECRET_KEY);
     return token?.trim() || undefined;
+  }
+
+  /** Separate main admin key. An inference sub-key may work for /v1 but
+   * must never be mistaken for an administrative credential. */
+  async getAdminApiToken(): Promise<string | undefined> {
+    const token = await this.secrets.get(ADMIN_TOKEN_SECRET_KEY);
+    return token?.trim() || undefined;
+  }
+
+  async setAdminApiToken(token: string): Promise<void> {
+    await this.secrets.store(ADMIN_TOKEN_SECRET_KEY, token.trim());
+  }
+
+  async clearAdminApiToken(): Promise<void> {
+    await this.secrets.delete(ADMIN_TOKEN_SECRET_KEY);
   }
 
   async setApiToken(token: string): Promise<void> {
