@@ -22,6 +22,29 @@ export async function run(): Promise<void> {
   await vscode.commands.executeCommand('workbench.view.extension.omlx');
   await vscode.commands.executeCommand('omlx.navigation.focus');
 
+  // VS Code may prefix WebviewPanel types in TabInputWebview, and tabGroups
+  // updates may arrive slightly after the command finishes.
+  const homeTabs = () => vscode.window.tabGroups.all.flatMap(group => group.tabs).filter(tab =>
+    tab.input instanceof vscode.TabInputWebview &&
+    (tab.input.viewType === 'omlx.home' || tab.input.viewType === 'mainThreadWebview-omlx.home')
+  );
+  await vscode.commands.executeCommand('omlx.openHome');
+  let openedHomeTabs = homeTabs();
+  for (let attempt = 0; !openedHomeTabs.length && attempt < 40; attempt++) {
+    await new Promise(resolve => setTimeout(resolve, 100));
+    openedHomeTabs = homeTabs();
+  }
+  assert.equal(
+    openedHomeTabs.length, 1,
+    'Home must open a dedicated oMLX webview editor (tabs: ' +
+      vscode.window.tabGroups.all.flatMap(group => group.tabs)
+        .map(tab => tab.input instanceof vscode.TabInputWebview ? tab.input.viewType : tab.label)
+        .join(', ') + ')'
+  );
+  await vscode.commands.executeCommand('omlx.openHome');
+  await new Promise(resolve => setTimeout(resolve, 200));
+  assert.equal(homeTabs().length, 1, 'Repeated Home clicks must reuse the tab');
+
   // Settings is independent of oMLX backend and Copilot Chat. It must work
   // in the strictly isolated Extension Development Host.
   await vscode.commands.executeCommand('omlx.openSettings');
