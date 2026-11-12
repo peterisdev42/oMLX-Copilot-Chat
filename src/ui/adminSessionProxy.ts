@@ -18,8 +18,18 @@ export class AdminSessionProxy {
 
   private constructor(
     private readonly server: http.Server,
-    readonly initialUrl: string
+    readonly initialUrl: string,
+    private readonly updateForwardedOrigin: (origin: string) => void
   ) {}
+
+  /** Allow same-origin requests from VS Code's forwarded URL in SSH/WSL. */
+  setForwardedOrigin(origin: string): void {
+    const parsed = new URL(origin);
+    if (!['http:', 'https:'].includes(parsed.protocol)) {
+      throw new Error('Unsupported forwarded proxy origin');
+    }
+    this.updateForwardedOrigin(parsed.origin);
+  }
 
   static async open(apiBaseUrl: string, apiKey: string): Promise<AdminSessionProxy> {
     const upstream = new URL(apiBaseUrl);
@@ -56,6 +66,7 @@ export class AdminSessionProxy {
     let ticketUsed = false;
     let backendSession: string | undefined = session;
     let serverPort = 0;
+    let forwardedOrigin: string | undefined;
 
     const srv = http.createServer(async (request, response) => {
       const fail = (code: number) => {
@@ -105,7 +116,8 @@ export class AdminSessionProxy {
 
       const origin = request.headers.origin;
       if (origin && origin !== 'http://127.0.0.1:' + serverPort &&
-          origin !== 'https://127.0.0.1:' + serverPort) {
+          origin !== 'https://127.0.0.1:' + serverPort &&
+          origin !== forwardedOrigin) {
         // The forwarded remote proxy may have a different origin; only
         // same-origin browser calls (or calls without an Origin) are accepted.
         fail(403);
@@ -191,7 +203,8 @@ export class AdminSessionProxy {
       serverPort = address.port;
       return new AdminSessionProxy(
         srv,
-        'http://127.0.0.1:' + serverPort + '/__omlx_start?ticket=' + ticket
+        'http://127.0.0.1:' + serverPort + '/__omlx_start?ticket=' + ticket,
+        origin => { forwardedOrigin = origin; }
       );
     } catch (error) {
       srv.close();
