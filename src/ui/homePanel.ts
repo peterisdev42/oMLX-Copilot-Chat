@@ -75,6 +75,7 @@ export class HomePanel implements vscode.Disposable {
         proxy?.dispose();
         return;
       }
+      proxy?.setForwardedOrigin(frame.origin);
 
       const panel = vscode.window.createWebviewPanel(
         'omlx.home', 'oMLX Home', vscode.ViewColumn.Active,
