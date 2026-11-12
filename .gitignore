@@ -20,3 +20,6 @@ coverage/
 # Local environment
 .env
 .env.*
+
+# VS Code binaries used by the Extension Host smoke test
+.vscode-test/
