@@ -97,12 +97,16 @@ integration session with GitHub Copilot Chat enabled.
 
 The oMLX activity bar entry contains two TreeView shortcuts:
 
-- **Home** opens the admin dashboard at `http://127.0.0.1:8000/admin` by
-  default, in VS Code's built-in browser/editor panel. The URL follows the
-  origin of `omlx.baseUrl` if the server host or port changes. For remote
-  workspaces, VS Code's URI forwarding is used. Some admin servers may block
-  iframe-based browsers through security headers; in that case use a regular
-  external browser.
+- **Home** opens the existing admin dashboard at `http://127.0.0.1:8000/admin`
+  by default in a dedicated **oMLX Home** VS Code Webview Panel (like PlatformIO
+  Home), without the Simple Browser's address bar. The page fills the editor,
+  and clicking Home again reveals the same tab. The URL follows the origin of
+  `omlx.baseUrl`; VS Code forwards local URLs for remote workspaces.
+  **Embedding requirement:** The oMLX admin server must permit iframe embedding
+  from the VS Code webview origin. If its response sets `X-Frame-Options: DENY`
+  or `SAMEORIGIN`, or a restrictive CSP `frame-ancestors`, the webview cannot
+  display it. Adjust the *server's* embedding policy for the trusted local
+  dashboard rather than bypassing its security headers in the extension.
 - **Settings** opens a VS Code-themed settings panel that is generated from the
   extension's declared `omlx.*` configuration schema. It supports User and
   Workspace scope, save, reset, and API-token actions. API tokens stay in
@@ -134,7 +138,7 @@ npm test
 ```
 
 This runs the TypeScript compiler and Node.js built-in tests for PDF and
-image attachment conversion.
+image attachment conversion, extension activation, and Home webview lifecycle.
 
 
 ### Missing sidebar data provider
