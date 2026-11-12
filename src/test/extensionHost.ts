@@ -22,6 +22,19 @@ export async function run(): Promise<void> {
   await vscode.commands.executeCommand('workbench.view.extension.omlx');
   await vscode.commands.executeCommand('omlx.navigation.focus');
 
+  // Home uses a webview editor rather than the Simple Browser. It can be
+  // created without a running oMLX backend (the iframe may show a connection error).
+  await vscode.commands.executeCommand('omlx.openHome');
+  const homeTabs = vscode.window.tabGroups.all.flatMap(group => group.tabs).filter(tab =>
+    tab.input instanceof vscode.TabInputWebview && tab.input.viewType === 'omlx.home'
+  );
+  assert.equal(homeTabs.length, 1, 'Home must open a dedicated oMLX webview editor');
+  await vscode.commands.executeCommand('omlx.openHome');
+  const repeatedHomeTabs = vscode.window.tabGroups.all.flatMap(group => group.tabs).filter(tab =>
+    tab.input instanceof vscode.TabInputWebview && tab.input.viewType === 'omlx.home'
+  );
+  assert.equal(repeatedHomeTabs.length, 1, 'Repeated Home clicks must reuse the tab');
+
   // Settings is independent of oMLX backend and Copilot Chat. It must work
   // in the strictly isolated Extension Development Host.
   await vscode.commands.executeCommand('omlx.openSettings');
