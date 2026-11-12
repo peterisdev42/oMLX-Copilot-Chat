@@ -150,8 +150,12 @@ export class AdminSessionProxy {
           'X-Content-Type-Options': 'nosniff',
           'Cache-Control': result.headers.get('cache-control') ?? 'no-store'
         };
+        // Preserve the oMLX server's frame and content restrictions. The
+        // bridge must not silently bypass site embedding policies.
         for (const name of ['content-type', 'content-disposition',
-          'etag', 'last-modified', 'content-range', 'accept-ranges']) {
+          'etag', 'last-modified', 'content-range', 'accept-ranges',
+          'content-security-policy', 'x-frame-options', 'permissions-policy',
+          'cross-origin-resource-policy', 'cross-origin-opener-policy']) {
           const value = result.headers.get(name);
           if (value) responseHeaders[name] = value;
         }
