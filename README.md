@@ -97,16 +97,28 @@ integration session with GitHub Copilot Chat enabled.
 
 The oMLX activity bar entry contains two TreeView shortcuts:
 
-- **Home** opens the existing admin dashboard at `http://127.0.0.1:8000/admin`
-  by default in a dedicated **oMLX Home** VS Code Webview Panel (like PlatformIO
-  Home), without the Simple Browser's address bar. The page fills the editor,
-  and clicking Home again reveals the same tab. The URL follows the origin of
-  `omlx.baseUrl`; VS Code forwards local URLs for remote workspaces.
-  **Embedding requirement:** The oMLX admin server must permit iframe embedding
-  from the VS Code webview origin. If its response sets `X-Frame-Options: DENY`
-  or `SAMEORIGIN`, or a restrictive CSP `frame-ancestors`, the webview cannot
-  display it. Adjust the *server's* embedding policy for the trusted local
-  dashboard rather than bypassing its security headers in the extension.
+- **Home** opens the existing admin dashboard in a dedicated **oMLX Home**
+  Webview Panel without a browser address bar. Repeated clicks reveal the same
+  editor tab. The configured `omlx.baseUrl` supplies the admin server address.
+  - If the saved VS Code API token is the oMLX **main** admin key, Home uses the
+    official `POST /admin/api/login` to create a short-lived admin session and
+    forwards it through a random-port, loopback-only bridge. The key never enters
+    the iframe, HTML, URL, browser cookie, or console. Each panel's bridge is
+    disposed when its tab closes. The browser receives only a partitioned,
+    HttpOnly capability cookie.
+  - If the saved token is an **inference sub-key**, or no valid admin session can
+    be created, use **Set admin API key** at the top of Home. This opens VS Code's
+    native secure input box (normal macOS Cmd+V works). The admin key is stored
+    separately in VS Code Secret Storage and is not used for inference requests.
+    After saving, Home retries automatic session authentication.
+  - This is a local desktop convenience; third-party cookie restrictions or
+    server frame-embedding policies may still prevent an iframe from loading
+    correctly in some environments. Do not disable browser security to work
+    around this. Use the standalone admin website in those cases.
+  - The standard admin UI remains inside an iframe. On macOS, its other text
+    inputs may still suffer from VS Code's nested-iframe Cmd+V bug
+    (microsoft/vscode#129178). The native **Set admin API key** path avoids
+    that limitation specifically for signing in.
 - **Settings** opens a VS Code-themed settings panel that is generated from the
   extension's declared `omlx.*` configuration schema. It supports User and
   Workspace scope, save, reset, and API-token actions. API tokens stay in
@@ -128,8 +140,16 @@ This extension cannot recover files it never receives. The oMLX output channel
 logs how many PDF data parts reach the provider, without logging their bytes.
 If the Copilot request contains an empty `<attachments>` wrapper, the provider
 returns an explicit error rather than claiming to have read the attachment.
-If this happens, use the oMLX dashboard chat or extract the PDF into a
-workspace file for the agent.
+The extension now also logs **PDF data parts received from VS Code** and
+**PDF file parts forwarded to oMLX** separately and fails when a received PDF
+could not be forwarded. The proposed `fileInputMimeTypes: ['application/pdf']`
+capability is advertised for hosts that support it; current stable builds may
+ignore the hint. **This cannot repair PDF data already dropped inside Copilot.**
+The upstream fixes (microsoft/vscode#336694 and #328403) must land before
+drag-and-drop PDF is guaranteed in third-party provider mode. Until then, use
+an oMLX-native file input or a user-selected workspace document. Tool-result
+image/PDF content, when provided as binary parts, is preserved rather than
+silently converted into empty strings.
 
 ## Tests
 
@@ -138,7 +158,8 @@ npm test
 ```
 
 This runs the TypeScript compiler and Node.js built-in tests for PDF and
-image attachment conversion, extension activation, and Home webview lifecycle.
+image attachment conversion, extension activation, Home webview lifecycle,
+secure admin session bridging, and multimodal tool-result conversion.
 
 
 ### Missing sidebar data provider
